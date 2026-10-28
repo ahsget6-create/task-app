@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة إدارة المهام | Task App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .modal {
+            display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: #161926; padding: 25px; border-radius: 12px; width: 400px; color: #fff; border: 1px solid #232738;
+        }
+        .modal-content input, .modal-content textarea, .modal-content select {
+            width: 100%; padding: 10px; margin: 8px 0 15px; background: #0f111a; border: 1px solid #232738; color: #fff; border-radius: 6px;
+        }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .task-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+        .task-actions a { color: #a0a5b5; text-decoration: none; font-size: 13px; transition: 0.2s; }
+        .task-actions a:hover { color: #00d26a; }
+        .task-actions a.delete:hover { color: #ff4d4d; }
+
+        /* تنسيق وسوم الأولويات الملونة */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 20px;
+        }
+        .badge.high {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .badge.medium {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+        .badge.low {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .task-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body class="dark-theme">
+
+    <div class="app-container">
+        <!-- الشريط الجانبي -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-list-check"></i>
+                <h2>إدارة المهام</h2>
+            </div>
+            <nav class="menu">
+                <a href="/" class="active"><i class="fa-solid fa-house"></i> الرئيسية</a>
+                <a href="/admin"><i class="fa-solid fa-user-shield"></i> لوحة الأدمن</a>
+            </nav>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h2>لوحة التحكم بالمهام</h2>
+                <button class="add-task-btn" onclick="openModal()">+ إضافة مهمة جديدة</button>
+            </header>
+
+            <!-- لوحة المهام -->
+            <section class="kanban-board">
+                <!-- قيد الانتظار -->
+                <div class="kanban-column">
+                    <div class="column-header">
+                        <h3><i class="fa-regular fa-circle"></i> قيد الانتظار</h3>
+                        <span class="count">{{ todo|length }}</span>
+                    </div>
+                    {% for task in todo %}
+                    <div class="task-card">
+                        <h4>{{ task.title }}</h4>
+                        <p>{{ task.description }}</p>
+                        <div class="task-footer">
+                            <span class="badge {{ task.priority }}">
+                                {% if task.priority == 'high' %}عالي 🔴{% elif task.priority == 'medium' %}متوسط 🟡{% else %}منخفض 🟢{% endif %}
+                            </span>
+                            <div class="task-actions">
+                                <a href="/update_status/{{ task.id }}/in_progress" title="نقل إلى جاري العمل"><i class="fa-solid fa-arrow-left"></i></a>
+                                <a href="/delete_task/{{ task.id }}" class="delete" title="حذف"><i class="fa-solid fa-trash"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- جاري العمل -->
+                <div class="kanban-column">
+                    <div class="column-header">
+                        <h3><i class="fa-solid fa-spinner"></i> جاري العمل</h3>
+                        <span class="count">{{ in_progress|length }}</span>
+                    </div>
+                    {% for task in in_progress %}
+                    <div class="task-card">
+                        <h4>{{ task.title }}</h4>
+                        <p>{{ task.description }}</p>
+                        <div class="task-footer">
+                            <span class="badge {{ task.priority }}">
+                                {% if task.priority == 'high' %}عالي 🔴{% elif task.priority == 'medium' %}متوسط 🟡{% else %}منخفض 🟢{% endif %}
+                            </span>
+                            <div class="task-actions">
+                                <a href="/update_status/{{ task.id }}/todo" title="إعادة لقيد الانتظار"><i class="fa-solid fa-arrow-right"></i></a>
+                                <a href="/update_status/{{ task.id }}/done" title="نقل إلى مكتملة"><i class="fa-solid fa-arrow-left"></i></a>
+                                <a href="/delete_task/{{ task.id }}" class="delete" title="حذف"><i class="fa-solid fa-trash"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- مكتملة -->
+                <div class="kanban-column">
+                    <div class="column-header">
+                        <h3><i class="fa-solid fa-circle-check"></i> مكتملة</h3>
+                        <span class="count">{{ done|length }}</span>
+                    </div>
+                    {% for task in done %}
+                    <div class="task-card">
+                        <h4>{{ task.title }}</h4>
+                        <p>{{ task.description }}</p>
+                        <div class="task-footer">
+                            <span class="badge {{ task.priority }}">
+                                {% if task.priority == 'high' %}عالي 🔴{% elif task.priority == 'medium' %}متوسط 🟡{% else %}منخفض 🟢{% endif %}
+                            </span>
+                            <div class="task-actions">
+                                <a href="/update_status/{{ task.id }}/in_progress" title="إعادة لـ جاري العمل"><i class="fa-solid fa-arrow-right"></i></a>
+                                <a href="/delete_task/{{ task.id }}" class="delete" title="حذف"><i class="fa-solid fa-trash"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- نافذة إضافة مهمة -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <h3>إضافة مهمة جديدة</h3>
+            <form action="/add_task" method="POST">
+                <label>عنوان المهمة:</label>
+                <input type="text" name="title" required placeholder="مثال: تصميم قاعدة البيانات">
+
+                <label>الوصف:</label>
+                <textarea name="description" rows="3" placeholder="تفاصيل المهمة..."></textarea>
+
+                <label>الأولوية:</label>
+                <select name="priority">
+                    <option value="high">عالي</option>
+                    <option value="medium" selected>متوسط</option>
+                    <option value="low">منخفض</option>
+                </select>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal()" style="background: #232738; color: #fff; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">إلغاء</button>
+                    <button type="submit" class="add-task-btn" style="background: #00d26a; color: #000; font-weight: bold; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">حفظ المهمة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal() { document.getElementById('taskModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
+    </script>
+</body>
+</html>

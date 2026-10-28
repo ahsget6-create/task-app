@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الأدمن | Task App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dark-theme">
+
+    <div class="app-container">
+        <!-- الشريط الجانبي -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-list-check"></i>
+                <h2>إدارة المهام</h2>
+            </div>
+            <nav class="menu">
+                <a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
+                <a href="/admin" class="active"><i class="fa-solid fa-user-shield"></i> لوحة الأدمن</a>
+            </nav>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h2>لوحة تحكم الأدمن (الإحصائيات)</h2>
+            </header>
+
+            <section class="kanban-board" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px;">
+
+                <div class="task-card" style="text-align: center; padding: 30px;">
+                    <h3>إجمالي المهام</h3>
+                    <p style="font-size: 36px; font-weight: bold; color: #00d26a; margin-top: 10px;">{{ total }}</p>
+                </div>
+
+                <div class="task-card" style="text-align: center; padding: 30px;">
+                    <h3>قيد الانتظار</h3>
+                    <p style="font-size: 36px; font-weight: bold; color: #ffa500; margin-top: 10px;">{{ todo }}</p>
+                </div>
+
+                <div class="task-card" style="text-align: center; padding: 30px;">
+                    <h3>جاري العمل</h3>
+                    <p style="font-size: 36px; font-weight: bold; color: #3498db; margin-top: 10px;">{{ in_progress }}</p>
+                </div>
+
+                <div class="task-card" style="text-align: center; padding: 30px;">
+                    <h3>مكتملة</h3>
+                    <p style="font-size: 36px; font-weight: bold; color: #2ecc71; margin-top: 10px;">{{ done }}</p>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+</body>
+</html>
